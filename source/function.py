@@ -58,11 +58,11 @@ def get_ticker_price():
     return response
 
 
-def get_klines_data():
+def get_klines_data(limit=1000):
     endpoint = '/fapi/v1/klines'
     params = {
         'symbol': SYMBOL,
-        'limit': 1500,
+        'limit': limit,
         # LIMIT参数	    权重
         # [1,100)	    1
         # [100, 500)	2

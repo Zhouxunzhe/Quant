@@ -45,7 +45,7 @@ def get_all_orders():
 
 
 def place_market_order(symbol, side, position_side, quantity):
-  # Place a market order for BTCUSD futures
+    # Place a market order for BTCUSD futures
     endpoint = '/fapi/v1/order'
     params = {
         'symbol': symbol,
@@ -60,7 +60,7 @@ def place_market_order(symbol, side, position_side, quantity):
 
 
 def place_limit_order(symbol, side, position_side, quantity, price):
-  # Place a limit order for BTCUSD futures
+    # Place a limit order for BTCUSD futures
     endpoint = '/fapi/v1/order'
     params = {
         'symbol': symbol,

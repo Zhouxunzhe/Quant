@@ -55,22 +55,19 @@ def calc_buy_point():
 
 def create_dataset(dataset, look_back):
     X, Y = [], []
-    for i in range(len(dataset)-look_back):
+    for i in range(len(dataset)-look_back-1):
         X.append(dataset[i:(i+look_back), :])
-        Y.append(dataset[i+look_back, 3])
+        Y.append(dataset[i+look_back+1, 3])
     return np.array(X), np.array(Y)
 
 
 def calc_buy_point_lstm():
-    size = len(get_klines_data())
-    kline_data = np.array(get_klines_data()).astype('float64')
+    size = len(get_klines_data(100))
+    kline_data = np.array(get_klines_data(100)).astype('float64')
     data = np.delete(kline_data, [0, 5, 6, 7, 8, 9, 10, 11], axis=1)
     scaler = MinMaxScaler(feature_range=(0, 1))
-    data = scaler.fit_transform(data)
-
-    train_size = int(len(data) * 0.9)
-    train_data = data[:train_size, :]
-    test_data = data[train_size:, :]
+    train_data = scaler.fit_transform(data)
+    test_data = train_data[size-32:, :]
 
     look_back = 30
     trainX, trainY = create_dataset(train_data, look_back)
@@ -80,20 +77,12 @@ def calc_buy_point_lstm():
     model.add(LSTM(32, input_shape=(look_back, train_data.shape[1])))
     model.add(Dense(1))
     model.compile(loss='mse', optimizer='adam')
-    model.fit(trainX, trainY, epochs=10, batch_size=32)
-
-    trainPredict = model.predict(trainX)
+    model.fit(trainX, trainY, epochs=10, batch_size=1)
     testPredict = model.predict(testX)
 
-    trainScore = np.sqrt(np.mean(np.square(trainY - trainPredict)))
-    testScore = np.sqrt(np.mean(np.square(testY - testPredict)))
-    print('Train Score: %.2f RMSE' % trainScore)
-    print('Test Score: %.2f RMSE' % testScore)
+    buy_point = False
+    print(data[size-1:, 3])
+    if testPredict > testY:
+        buy_point = True
 
-    plt.plot(range(len(testY)), testY, label='test')
-    plt.plot(range(len(testPredict)), testPredict, label='predicted')
-    plt.legend()
-    plt.show()
-
-    buy_point = []
     return buy_point

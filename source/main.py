@@ -18,11 +18,9 @@ from trader import *
 
 
 if __name__ == '__main__':
-    calc_buy_point()
-    # calc_buy_point_lstm()
-    # autotrader = AutoTrader()
-    # place_market_order(SYMBOL, 'SELL', 'SHORT', 5)
-    # place_market_order(SYMBOL, 'BUY', 'LONG', 5)
-    # while True:
-    #     autotrader.work()
-    #     time.sleep(INTERVAL)
+    autotrader = AutoTrader()
+    place_market_order(SYMBOL, 'SELL', 'SHORT', 5)
+    place_market_order(SYMBOL, 'BUY', 'LONG', 5)
+    while True:
+        autotrader.work()
+        time.sleep(INTERVAL)
