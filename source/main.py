@@ -18,9 +18,10 @@ from trader import *
 
 
 if __name__ == '__main__':
-    autotrader = AutoTrader()
-    place_market_order(SYMBOL, 'SELL', 'SHORT', 5)
-    place_market_order(SYMBOL, 'BUY', 'LONG', 5)
-    while True:
-        autotrader.work()
-        time.sleep(INTERVAL)
+    price_lstm()
+    # autotrader = AutoTrader()
+    # place_market_order(SYMBOL, 'SELL', 'SHORT', 5)
+    # place_market_order(SYMBOL, 'BUY', 'LONG', 5)
+    # while True:
+    #     autotrader.work()
+    #     time.sleep(INTERVAL)

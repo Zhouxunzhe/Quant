@@ -44,7 +44,7 @@ def get_account_trade_list():
     return response
 
 
-# TODO: return nothing[]
+# TODO: return []
 # get_account_trade_list()
 
 def get_ticker_price():
@@ -63,11 +63,11 @@ def get_klines_data(limit=1000):
     params = {
         'symbol': SYMBOL,
         'limit': limit,
-        # LIMIT参数	    权重
-        # [1,100)	    1
-        # [100, 500)	2
-        # [500, 1000]	5
-        # > 1000	    10
+        # LIMIT参数（最大1500）   权重
+        # [1,100)	            1
+        # [100, 500)	        2
+        # [500, 1000]	        5
+        # > 1000	            10
         'interval': '1h',
         # Available intervals: '1m', '3m', '5m', '15m', '30m',
         # '1h', '2h', '4h', '6h', '8h', '12h', '1d', '3d', '1w', '1M'

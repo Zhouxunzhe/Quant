@@ -1,4 +1,8 @@
-from algorithm import *
+from _LSTM import *
+from _ML import *
+from _ARIMA import *
+from _VWAP import *
+from _RF import *
 
 
 class AutoTrader:
@@ -41,7 +45,7 @@ class AutoTrader:
             should_notify_open_short = True
 
         # bid
-        if new_bid_price > 0 and should_notify_open_long and calc_buy_point_lstm():
+        if new_bid_price > 0 and should_notify_open_long and price_lstm():
             quantity = round(min(MAX_ORDER, POSITION_LIMIT - self.position), quantity_precision)
             # quantity = 100
             new_bid_price = round(new_bid_price, price_precision)
@@ -53,7 +57,7 @@ class AutoTrader:
                                             quantity, new_bid_price)
 
         # ask
-        if new_ask_price > 0 and should_notify_open_short and not calc_buy_point_lstm():
+        if new_ask_price > 0 and should_notify_open_short and not price_lstm():
             quantity = round(min(MAX_ORDER, POSITION_LIMIT + self.position), quantity_precision)
             # quantity = 100
             new_ask_price = round(new_bid_price, 1)
