@@ -27,9 +27,9 @@ def price_arima():
     # 不进行差分
     # D_ts = ts
     # 进行一阶差分
-    # D_ts = ts.diff().dropna()
+    D_ts = ts.diff().dropna()
     # 进行二阶差分
-    D_ts = ts.diff().diff().dropna()
+    # D_ts = ts.diff().diff().dropna()
     # 绘制差分后时序图
     #     # D_ts.plot()
 
