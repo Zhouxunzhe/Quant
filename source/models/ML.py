@@ -4,6 +4,7 @@ from sklearn.svm import SVC
 from sklearn.linear_model import RidgeClassifier, LogisticRegression
 from sklearn import neighbors
 from sklearn.model_selection import GridSearchCV
+from xgboost import XGBRFClassifier
 import torch.nn as nn
 import torch
 
@@ -32,6 +33,11 @@ def swing(model_name):
         model = LogisticRegression()
     elif model_name == 'svc':
         model = SVC()
+    elif model_name == 'xgboost':
+        model = XGBRFClassifier(n_estimators=70,
+                                max_depth=10,
+                                learning_rate=0.3,
+                                colsample_bytree=0.8)
     else:
         print('model_name invalid')
         return

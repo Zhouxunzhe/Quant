@@ -16,8 +16,8 @@ def swing_rf():
     train_label = close_data[0:size - pred_size]
     test_data = factors[size - pred_size:size - 1, :]
     test_label = close_data[size - pred_size:]
-    model = RandomForestRegressor(random_state=44, max_depth=70, max_features='sqrt', min_samples_leaf=4,
-                                  min_samples_split=2, n_estimators=200)
+    model = RandomForestRegressor(random_state=44, max_depth=10, max_features='sqrt', min_samples_leaf=4,
+                                  min_samples_split=2, n_estimators=70)
     model.fit(train_data, train_label)
     prediction = model.predict(test_data)
     prediction = np.where(prediction > 0.5, 1.0, 0.0)

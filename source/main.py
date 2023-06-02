@@ -3,6 +3,7 @@ from models.LSTM import price_lstm
 from models.ML import swing
 from models.RF import swing_rf
 from models.ARIMA import price_arima
+from models.RL import *
 
 #  "minPrice": "0.00000100",
 #  "maxPrice": "100000.00000000",
@@ -21,7 +22,7 @@ from models.ARIMA import price_arima
 
 
 if __name__ == '__main__':
-    price_lstm()
+    dqn()
     # autotrader = AutoTrader()
     # place_market_order(SYMBOL, 'SELL', 'SHORT', 5)
     # place_market_order(SYMBOL, 'BUY', 'LONG', 5)
