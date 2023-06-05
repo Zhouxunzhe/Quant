@@ -11,8 +11,8 @@ warnings.filterwarnings("ignore")
 
 
 def price_arima():
-    size = 500
-    pred_size = 50
+    size = 1000
+    pred_size = 200
     kline_data = np.array(get_klines_data(size)).astype('float64')
     data = np.delete(kline_data, [0, 6, 11], axis=1)
     train_data = data[:size-pred_size, :]
@@ -27,9 +27,9 @@ def price_arima():
     # 不进行差分
     # D_ts = ts
     # 进行一阶差分
-    D_ts = ts.diff().dropna()
+    # D_ts = ts.diff().dropna()
     # 进行二阶差分
-    # D_ts = ts.diff().diff().dropna()
+    D_ts = ts.diff().diff().dropna()
     # 绘制差分后时序图
     #     # D_ts.plot()
 

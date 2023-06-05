@@ -1,7 +1,6 @@
 import time
 from models.LSTM import price_lstm
 from models.ML import swing
-from models.RF import swing_rf
 from models.ARIMA import price_arima
 from models.RL import *
 
@@ -22,7 +21,10 @@ from models.RL import *
 
 
 if __name__ == '__main__':
-    dqn()
+    # dqn()
+    # swing('rf')
+    price_arima()
+    # actor_critic()
     # autotrader = AutoTrader()
     # place_market_order(SYMBOL, 'SELL', 'SHORT', 5)
     # place_market_order(SYMBOL, 'BUY', 'LONG', 5)

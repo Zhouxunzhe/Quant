@@ -5,6 +5,7 @@ import pandas as pd
 import math
 import torch.nn.functional as function
 from torch import optim
+init_fund = 100000000
 
 
 class Environment:
@@ -14,77 +15,71 @@ class Environment:
         self.data['pct_change'] = \
             ((self.data['close'] - self.data['close'].shift(1)) / self.data['close'].shift(1))
         self.data = self.data[1:]
-        self.barpos = 1
+        self.day_epoch = 1
         self.buy_fee_rate = 0.0
         self.sell_fee_rate = 0.0
-        self.order_size = 100000  # 每个订单购买的价钱
-        self.balance = 10000000
+        self.order_size = 500000  # 每个订单购买的价钱
+        self.balance = init_fund
         self.position = 0  # 持有股份数
         self.market_value = 0
         self.fund = self.balance
         self.day_profit = 0
 
     def reset(self):
-        self.barpos = 1
-        self.balance = 10000000
+        self.day_epoch = 1
+        self.balance = init_fund
         self.position = 0  # 持有股份数
         self.market_value = 0
         self.fund = self.balance
         self.day_profit = 0
+        state = list(self.data.iloc[self.day_epoch])
 
-        observation = list(self.data.iloc[self.barpos])
-        observation.append(self.fund)
-        observation.append(self.position)
-        observation.append(self.balance)
-        return observation
+        return state
 
     def step(self, action):
         op = 0  # 0:do nothing, 1:buy, 2:sell
-        current_price = self.data['close'][self.barpos]
-        self.day_profit = self.position * current_price * self.data['pct_change'][self.barpos]
+        current_price = self.data['close'][self.day_epoch]
+        self.day_profit = self.position * current_price * self.data['pct_change'][self.day_epoch]
         if action == 0:
+            # buy
             if self.balance > self.order_size:
-                buy_order = math.floor(self.order_size / self.data['close'][self.barpos])
+                buy_order = math.floor(self.order_size / self.data['close'][self.day_epoch])
                 self.position += buy_order
                 trade_amount = buy_order * current_price
                 buy_fee = buy_order * current_price * self.buy_fee_rate
                 self.balance = self.balance - trade_amount - buy_fee
-                # print("buy:success")
                 op = 1
             else:
                 # print("buy:not enough fund")
                 pass
         elif action == 1:
+            # sell
             if self.position * current_price > self.order_size:
-                sell_order = math.ceil(self.order_size / self.data['close'][self.barpos])
+                sell_order = math.ceil(self.order_size / self.data['close'][self.day_epoch])
                 self.position -= sell_order
                 sell_fee = sell_order * current_price * self.sell_fee_rate
                 trade_amount = sell_order * current_price
                 self.balance = self.balance + trade_amount - sell_fee
                 op = 2
-                # print("sell:success")
             else:
                 # print("sell:not enough stock")
                 pass
         else:
+            # do nothing
             pass
 
         # 重新计算持仓状况
         self.market_value = self.position * current_price
         self.fund = self.market_value + self.balance
-        self.barpos += 1
-
-        observation_ = list(self.data.iloc[self.barpos])
-        observation_.append(self.fund)
-        observation_.append(self.position)
-        observation_.append(self.balance)
+        self.day_epoch += 1
+        state_ = list(self.data.iloc[self.day_epoch])
         reward = self.day_profit
-        if self.barpos == len(self.data) - 1:
+        if self.day_epoch == len(self.data) - 1:
             done = True
         else:
             done = False
 
-        return observation_, reward, done, op
+        return state_, reward, done, op
 
 
 class DeepQNetwork(nn.Module):
@@ -107,8 +102,10 @@ class DeepQNetwork(nn.Module):
 
     def forward(self, state):
         state.to(self.device)
-        x = function.relu(self.fc1(state.to(torch.float32)))
-        x = function.relu(self.fc2(x))
+        x = self.fc1(state.to(torch.float32))
+        x = function.leaky_relu(x)
+        x = self.fc2(x)
+        x = function.leaky_relu(x)
         actions = self.fc3(x)
 
         return actions
@@ -118,7 +115,7 @@ class Agent:
     # gamma的折扣率它必须介于0和1之间。越大，折扣越小。这意味着学习，agent 更关心长期奖励。另一方面，gamma越小，折扣越大。这意味着我们的 agent 更关心短期奖励（最近的奶酪）。
     # epsilon探索率ϵ。即策略是以1−ϵ的概率选择当前最大价值的动作，以ϵ的概率随机选择新动作。
     def __init__(self, gamma, epsilon, lr, n_state, batch_size, n_actions=3,
-                 max_mem_size=100000, eps_end=0.01, eps_dec=5e-4):
+                 max_mem_size=100000, eps_end=0.01, eps_dec=0.995):
         self.gamma = gamma
         self.epsilon = epsilon
         self.eps_min = eps_end
@@ -131,7 +128,8 @@ class Agent:
         self.mem_cntr = 0
 
         self.Q_eval = DeepQNetwork(self.lr, n_state=n_state, n_actions=self.n_actions,
-                                   fc1_dims=64, fc2_dims=64)
+                                   fc1_dims=256, fc2_dims=256)
+        self.loss = None
         self.state_memory = np.zeros((self.mem_size, n_state), dtype=np.float32)
         self.new_state_memory = np.zeros((self.mem_size, n_state), dtype=np.float32)
         self.action_memory = np.zeros(self.mem_size, dtype=np.int32)
@@ -155,11 +153,10 @@ class Agent:
 
         self.mem_cntr += 1
 
-    # observation就是状态state
-    def choose_action(self, observation):
+    def choose_action(self, state):
         if np.random.random() > self.epsilon:
             # 随机0-1，即1-epsilon的概率执行以下操作,最大价值操作
-            state = torch.tensor(observation).to(self.Q_eval.device)
+            state = torch.tensor(state).to(self.Q_eval.device)
             # 放到神经网络模型里面得到action的Q值vector
             actions = self.Q_eval.forward(state)
             action = torch.argmax(actions).item()
@@ -183,18 +180,19 @@ class Agent:
         new_state_batch = torch.tensor(self.new_state_memory[batch]).to(self.Q_eval.device)
         reward_batch = torch.tensor(self.reward_memory[batch]).to(self.Q_eval.device)
         terminal_batch = torch.tensor(self.terminal_memory[batch]).to(self.Q_eval.device)  # 存储是否结束的bool型变量
-
-        # action_batch = T.tensor(self.action_memory[batch]).to(self.Q_eval.device)
         action_batch = self.action_memory[batch]
 
-        # 第batch_index行，取action_batch列,对state_batch中的每一组输入，输出action对应的Q值,batchsize行，1列的Q值
+        # 第batch_index行，取action_batch列,对state_batch中的每一组输入，输出action对应的Q值,batch size行，1列的Q值
         q_eval = self.Q_eval.forward(state_batch)[batch_index, action_batch]
         q_next = self.Q_eval.forward(new_state_batch)
         q_next[terminal_batch] = 0.0  # 如果是最终状态，则将q值置为0
+
         q_target = reward_batch + self.gamma * torch.max(q_next, dim=1)[0]
+
         loss = self.Q_eval.loss(q_target, q_eval).to(self.Q_eval.device)
         loss.backward()
+        self.loss = loss.item()
         self.Q_eval.optimizer.step()
 
-        self.epsilon = self.epsilon - self.eps_dec if self.epsilon > self.eps_min \
+        self.epsilon = self.epsilon * self.eps_dec if self.epsilon > self.eps_min \
             else self.eps_min

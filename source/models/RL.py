@@ -1,121 +1,68 @@
-from models import DQN, DDPG, AC
+from models import DQN, AC
 import numpy as np
 import matplotlib.pyplot as plt
 from function import *
 
 
 def dqn():
-    size = 1000
-    kline_data = np.array(get_klines_data(size)).astype('float64')
+    data_size = 1500
+    kline_data = np.array(get_klines_data(data_size)).astype('float64')
     data = np.delete(kline_data, [0, 6, 11], axis=1)
     env = DQN.Environment(data)
-    agent = DQN.Agent(gamma=0.99, epsilon=1.0, batch_size=32, n_actions=3, eps_end=0.1, n_state=5, lr=0.003)
+    agent = DQN.Agent(gamma=0.01, epsilon=1.0, batch_size=64, n_actions=3, eps_end=0.01, n_state=2, lr=0.001)
     model_profits = []
-    n_games = 50  # 训练局数
+    n_games = 100  # 训练局数
 
     for i in range(n_games):
-        profits = [0]
         done = False
-        observation = env.reset()
+        state = env.reset()
+        reward_pool, loss_list = [], []
         while not done:
-            action = agent.choose_action(observation)
-            observation_, reward, done, op = env.step(action)
-            profits.append(reward)
-            agent.store_transition(observation, action, reward, observation_, done)
+            action = agent.choose_action(state)
+            state_, reward, done, op = env.step(action)
+            reward_pool.append(reward)
+            agent.store_transition(state, action, reward, state_, done)
             agent.learn()
-            observation = observation_
+            loss_list.append(agent.loss)
+            state = state_
+
+        # plt.plot(range(len(loss_list)), loss_list, label="loss")
+        # plt.legend(loc="upper right")
+        # plt.show()
+        # plt.plot(range(len(reward_pool)), reward_pool, label="reward")
+        # plt.legend(loc="upper right")
+        # plt.show()
 
         print('episode', i,
               'epsilon %.2f' % agent.epsilon,
-              'profits %.2f' % sum(profits))
-        model_profits.append(sum(profits))
+              'profits %.2f' % sum(reward_pool))
+        model_profits.append(sum(reward_pool))
 
     fund, buy, sell = [], [], []
     profit = 0
-    profits = [0]
     done = False
-    observation = env.reset()
+    state = env.reset()
+    reward_pool, loss_list = [], []
     while not done:
-        action = agent.choose_action(observation)
-        observation_, reward, done, op = env.step(action)
-        profits.append(reward)
-        agent.store_transition(observation, action, reward, observation_, done)
+        action = agent.choose_action(state)
+        state_, reward, done, op = env.step(action)
+        reward_pool.append(reward)
+        agent.store_transition(state, action, reward, state_, done)
         agent.learn()
-        observation = observation_
+        loss_list.append(agent.loss)
+        state = state_
 
         if op == 1:
-            buy.append(env.barpos)
+            buy.append(env.day_epoch)
         elif op == 2:
-            sell.append(env.barpos)
+            sell.append(env.day_epoch)
         profit += reward
         fund.append(profit)
 
     print('episode', n_games,
           'epsilon %.2f' % agent.epsilon,
-          'profits %.2f' % sum(profits))
-    model_profits.append(sum(profits))
-
-    # plt.plot(range(len(fund)), fund)
-    # plt.show()
-    plt.figure(figsize=(16, 8))
-    plt.plot(env.data['close'].iloc[1:], linewidth=1.2)
-    plt.plot(env.data['close'].iloc[1:], '^', markersize=10, label='buying signal', markevery=buy)
-    plt.plot(env.data['close'].iloc[1:], 'v', markersize=10, label='selling signal', markevery=sell)
-    plt.legend(loc='upper right')
-    plt.show()
-
-
-def ddpg():
-    size = 1000
-    kline_data = np.array(get_klines_data(size)).astype('float64')
-    data = np.delete(kline_data, [0, 6, 11], axis=1)
-    env = DDPG.Environment(data)
-    agent = DDPG.Agent(gamma=0.99, tau=0.001, batch_size=32, n_actions=3,
-                       input_dims=5, lr_actor=0.0001, lr_critic=0.001)
-    model_profits = []
-    n_games = 100  # 训练局数
-
-    for i in range(n_games):
-        profits = [0]
-        done = False
-        observation = env.reset()
-        while not done:
-            action = agent.choose_action(observation)
-            observation_, reward, done, op = env.step(action)
-            profits.append(reward)
-            agent.store_transition(observation, action, reward, observation_, done)
-            agent.learn()
-            observation = observation_
-
-        print('episode', i,
-              'epsilon %.2f' % agent.tau,
-              'profits %.2f' % sum(profits))
-        model_profits.append(sum(profits))
-
-    fund, buy, sell = [], [], []
-    profit = 0
-    profits = [0]
-    done = False
-    observation = env.reset()
-    while not done:
-        action = agent.choose_action(observation)
-        observation_, reward, done, op = env.step(action)
-        profits.append(reward)
-        agent.store_transition(observation, action, reward, observation_, done)
-        agent.learn()
-        observation = observation_
-
-        if op == 1:
-            buy.append(env.barpos)
-        elif op == 2:
-            sell.append(env.barpos)
-        profit += reward
-        fund.append(profit)
-
-    print('episode', n_games,
-          'epsilon %.2f' % agent.tau,
-          'profits %.2f' % sum(profits))
-    model_profits.append(sum(profits))
+          'profits %.2f' % sum(reward_pool))
+    model_profits.append(sum(reward_pool))
 
     # plt.plot(range(len(fund)), fund)
     # plt.show()
