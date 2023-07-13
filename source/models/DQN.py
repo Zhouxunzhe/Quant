@@ -5,7 +5,7 @@ import pandas as pd
 import math
 import torch.nn.functional as function
 from torch import optim
-init_fund = 100000000
+init_fund = 1000000
 
 
 class Environment:
@@ -18,7 +18,7 @@ class Environment:
         self.day_epoch = 1
         self.buy_fee_rate = 0.0
         self.sell_fee_rate = 0.0
-        self.order_size = 500000  # 每个订单购买的价钱
+        self.order_size = 150000  # 每个订单购买的价钱
         self.balance = init_fund
         self.position = 0  # 持有股份数
         self.market_value = 0

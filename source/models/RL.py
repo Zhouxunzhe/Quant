@@ -5,13 +5,13 @@ from function import *
 
 
 def dqn():
-    data_size = 1500
+    data_size = 500
     kline_data = np.array(get_klines_data(data_size)).astype('float64')
     data = np.delete(kline_data, [0, 6, 11], axis=1)
     env = DQN.Environment(data)
     agent = DQN.Agent(gamma=0.01, epsilon=1.0, batch_size=64, n_actions=3, eps_end=0.01, n_state=2, lr=0.001)
     model_profits = []
-    n_games = 100  # 训练局数
+    n_games = 10  # 训练局数
 
     for i in range(n_games):
         done = False

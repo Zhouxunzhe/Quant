@@ -21,10 +21,10 @@ from models.RL import *
 
 
 if __name__ == '__main__':
+    # swing('xgboost')
+    price_lstm()
+    # price_arima()
     # dqn()
-    # swing('rf')
-    price_arima()
-    # actor_critic()
     # autotrader = AutoTrader()
     # place_market_order(SYMBOL, 'SELL', 'SHORT', 5)
     # place_market_order(SYMBOL, 'BUY', 'LONG', 5)
